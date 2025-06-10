@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Tester - Java to Python Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        textarea, select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        textarea {
+            min-height: 150px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .result-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .score {
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .database-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .database-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .database-item:hover {
+            border-color: #007bff;
+        }
+        .database-item h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .database-item .category {
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .copy-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #545b62;
+        }
+        .copied {
+            background-color: #28a745 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Similarity Tester - Java to Python Dataset</h1>
+        
+        <!-- Similarity Testing Section -->
+        <div class="section">
+            <h2>🧪 Test Similarity</h2>
+            <div class="form-group">
+                <label for="generatedPython">Generated Python Code:</label>
+                <textarea id="generatedPython" placeholder="Paste the generated Python code here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="testType">Test Against:</label>
+                <select id="testType">
+                    <option value="all">All Database Items (30 items)</option>
+                    <option value="single">Specific Item by ID</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="itemIdGroup" style="display: none;">
+                <label for="itemId">Database Item ID (1-30):</label>
+                <input type="number" id="itemId" min="1" max="30" placeholder="Enter item ID">
+            </div>
+            
+            <button onclick="testSimilarity()">🔍 Test Similarity</button>
+            
+            <div id="similarityResults"></div>
+        </div>
+
+        <!-- Dataset Browser Section -->
+        <div class="section">
+            <h2>📚 Dataset Browser</h2>
+            <p>Browse all 30 Java-Python syntax pairs in the database:</p>
+            <button onclick="loadDatabase()">📖 Load Dataset</button>
+            
+            <div id="databaseResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide item ID input based on test type
+        document.getElementById('testType').addEventListener('change', function() {
+            const itemIdGroup = document.getElementById('itemIdGroup');
+            if (this.value === 'single') {
+                itemIdGroup.style.display = 'block';
+            } else {
+                itemIdGroup.style.display = 'none';
+            }
+        });
+
+        async function testSimilarity() {
+            const generatedPython = document.getElementById('generatedPython').value;
+            const testType = document.getElementById('testType').value;
+            const itemId = document.getElementById('itemId').value;
+            const resultsDiv = document.getElementById('similarityResults');
+            
+            if (!generatedPython.trim()) {
+                alert('Please enter generated Python code');
+                return;
+            }
+            
+            if (testType === 'single' && !itemId) {
+                alert('Please enter database item ID');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="loading">Testing similarity...</div>';
+            
+            try {
+                const requestBody = {
+                    generated_python: generatedPython,
+                    test_type: testType
+                };
+                
+                if (testType === 'single') {
+                    requestBody.item_id = parseInt(itemId);
+                }
+                
+                const response = await fetch('/test_similarity', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                displaySimilarityResults(data);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function displaySimilarityResults(data) {
+            const resultsDiv = document.getElementById('similarityResults');
+            
+            if (data.error) {
+                resultsDiv.innerHTML = `<div class="error">${data.error}</div>`;
+                return;
+            }
+            
+            if (data.test_type === 'single') {
+                const result = data.result;
+                
+                let html = `
+                    <div class="results">
+                        <div class="result-section">
+                            <h3>Single Item Test - ID: ${data.item_id}</h3>
+                            <div class="score">Total Score: ${result.total_score}%</div>
+                            <p><strong>Syntax Similarity:</strong> ${result.syntax_similarity}%</p>
+                            <p><strong>Output Similarity:</strong> ${result.output_similarity}%</p>
+                            <p><strong>Category:</strong> ${result.database_item.category}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Expected Python: 
+                                <button class="copy-btn" data-copy-text="${escapeHtml(result.expected_python)}" onclick="copyFromDataset(this)">Copy</button>
+                            </h3>
+                            <div class="code-block">${escapeHtml(result.expected_python)}</div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Generated Python: 
+                                <button class="copy-btn" data-copy-text="${escapeHtml(result.generated_python)}" onclick="copyFromDataset(this)">Copy</button>
+                            </h3>
+                            <div class="code-block">${escapeHtml(result.generated_python)}</div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Expected Output: 
+                                <button class="copy-btn" data-copy-text="${escapeHtml(result.expected_output)}" onclick="copyFromDataset(this)">Copy</button>
+                            </h3>
+                            <div class="code-block">${escapeHtml(result.expected_output)}</div>
+                        </div>
+                        
+                        <div class="result-section">
+                            <h3>Generated Output: 
+                                <button class="copy-btn" data-copy-text="${escapeHtml(result.generated_output)}" onclick="copyFromDataset(this)">Copy</button>
+                            </h3>
+                            <div class="code-block">${escapeHtml(result.generated_output)}</div>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.innerHTML = html;
+            } else {
+                displayAllSimilarityResults(data);
+            }
+        }
+
+        function displayAllSimilarityResults(data) {
+            const resultsDiv = document.getElementById('similarityResults');
+            
+            let html = `
+                <div class="results">
+                    <div class="result-section">
+                        <h3>📊 Similarity Test Results - All ${data.total_items} Items</h3>
+                        <p>Results sorted by total score (highest first). Each score = 50% syntax + 50% output similarity.</p>
+                    </div>
+            `;
+            
+            data.results.forEach((result, index) => {
+                const scoreColor = result.total_score >= 80 ? '#28a745' : 
+                                 result.total_score >= 60 ? '#ffc107' : '#dc3545';
+                
+                html += `
+                    <div class="result-section" style="border-left-color: ${scoreColor}">
+                        <h4>🏆 Rank ${index + 1} - ID: ${result.id} (${result.category})</h4>
+                        <div class="score" style="color: ${scoreColor}">Total Score: ${result.total_score}%</div>
+                        <p><strong>📝 Syntax:</strong> ${result.syntax_similarity}% | <strong>▶️ Output:</strong> ${result.output_similarity}%</p>
+                        <p><strong>Level:</strong> ${result.level} | <strong>Category:</strong> ${result.category}</p>
+                        
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; font-weight: bold;">👁️ View Details</summary>
+                            <div style="margin-top: 10px;">
+                                <p><strong>Expected Python:</strong>
+                                    <button class="copy-btn" data-copy-text="${escapeHtml(result.expected_python)}" onclick="copyFromDataset(this)">Copy</button>
+                                </p>
+                                <div class="code-block">${escapeHtml(result.expected_python)}</div>
+                                
+                                <p><strong>Generated Output:</strong>
+                                    <button class="copy-btn" data-copy-text="${escapeHtml(result.generated_output)}" onclick="copyFromDataset(this)">Copy</button>
+                                </p>
+                                <div class="code-block">${escapeHtml(result.generated_output)}</div>
+                                
+                                <p><strong>Expected Output:</strong>
+                                    <button class="copy-btn" data-copy-text="${escapeHtml(result.expected_output)}" onclick="copyFromDataset(this)">Copy</button>
+                                </p>
+                                <div class="code-block">${escapeHtml(result.expected_output)}</div>
+                            </div>
+                        </details>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        async function loadDatabase() {
+            const resultsDiv = document.getElementById('databaseResults');
+            resultsDiv.innerHTML = '<div class="loading">Loading database...</div>';
+            
+            try {
+                const response = await fetch('/database');
+                const data = await response.json();
+                displayDatabase(data.database);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error loading database: ${error.message}</div>`;
+            }
+        }
+
+        function displayDatabase(database) {
+            const resultsDiv = document.getElementById('databaseResults');
+            
+            let html = '<div class="database-grid">';
+            
+            database.forEach(item => {
+                // Safer approach: store item data in dataset and use onclick with item id
+                html += `
+                    <div class="database-item" data-item-id="${item.id}" onclick="useInTestById(${item.id})">
+                        <h4>ID: ${item.id}</h4>
+                        <div class="category">${item.category}</div>
+                        <p><strong>Level:</strong> ${item.level}</p>
+                        <p><strong>Java:</strong> 
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyCode(${item.id}, 'java', this)">Copy</button>
+                        </p>
+                        <div class="code-block">${escapeHtml(item.java_code)}</div>
+                        <p><strong>Expected Python:</strong> 
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyCode(${item.id}, 'python', this)">Copy</button>
+                        </p>
+                        <div class="code-block">${escapeHtml(item.expected_python)}</div>
+                        <small>📌 Click card to use Python in similarity test</small>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+            
+            // Store database globally for copy functionality
+            window.databaseItems = database;
+        }
+
+        function useInTestById(itemId) {
+            const item = window.databaseItems.find(item => item.id === itemId);
+            if (!item) {
+                alert('Item not found');
+                return;
+            }
+            
+            document.getElementById('generatedPython').value = item.expected_python;
+            // Scroll to similarity test section
+            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function useInTest(pythonCode) {
+            // Decode the escaped string back to normal
+            const decodedCode = pythonCode
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '\r')
+                .replace(/\\"/g, '"')
+                .replace(/\\'/g, "'")
+                .replace(/\\`/g, '`')
+                .replace(/\\\\/g, '\\');
+            
+            document.getElementById('generatedPython').value = decodedCode;
+            // Scroll to similarity test section
+            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function copyCode(itemId, codeType, button) {
+            const item = window.databaseItems.find(item => item.id === itemId);
+            if (!item) {
+                alert('Item not found');
+                return;
+            }
+            
+            const text = codeType === 'java' ? item.java_code : item.expected_python;
+            copyTextToClipboard(text, button);
+        }
+
+        function copyTextToClipboard(text, button) {
+            if (!text) {
+                alert('No text to copy');
+                return;
+            }
+            
+            // No need to process escape sequences since we're using JSON.stringify
+            navigator.clipboard.writeText(text).then(function() {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (fallbackErr) {
+                    alert('Failed to copy code. Please copy manually.');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function copyFromDataset(button) {
+            const text = button.getAttribute('data-copy-text');
+            if (!text) {
+                alert('No text to copy');
+                return;
+            }
+            
+            // Decode HTML entities back to normal text
+            const decodedText = decodeHtml(text);
+            
+            navigator.clipboard.writeText(decodedText).then(function() {
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = decodedText;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.textContent = 'Copied!';
+                    button.classList.add('copied');
+                    setTimeout(() => {
+                        button.textContent = 'Copy';
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (fallbackErr) {
+                    alert('Failed to copy code. Please copy manually.');
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function decodeHtml(html) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = html;
+            return txt.value;
+        }
+    </script>
+</body>
+</html>
